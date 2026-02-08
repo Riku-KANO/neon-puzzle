@@ -26,12 +26,19 @@ function App() {
   );
   const [gameState, setGameState] = useState<GameState>("MENU");
   const [isWasmReady, setIsWasmReady] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const controlsRef = useRef<OrbitControlsImpl>(null);
 
   useEffect(() => {
-    init().then(() => {
-      setIsWasmReady(true);
-    });
+    init()
+      .then(() => {
+        setIsWasmReady(true);
+      })
+      .catch((err: unknown) => {
+        console.error("WASM init failed:", err);
+        const message = err instanceof Error ? err.message : String(err);
+        setLoadError(message);
+      });
   }, []);
 
   const startGame = (difficulty: "easy" | "normal" | "hard") => {
@@ -89,8 +96,15 @@ function App() {
 
   if (!isWasmReady)
     return (
-      <div className="text-white flex items-center justify-center h-screen bg-black">
-        Loading System...
+      <div className="text-white flex flex-col items-center justify-center h-screen bg-black">
+        <div className="text-2xl mb-4">
+          {loadError ? "System Failure" : "Loading System..."}
+        </div>
+        {loadError && (
+          <div className="text-red-400 font-mono bg-red-950/20 p-4 rounded border border-red-900/50 max-w-lg overflow-auto">
+            {loadError}
+          </div>
+        )}
       </div>
     );
 

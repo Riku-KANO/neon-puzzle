@@ -17,6 +17,7 @@ const dirname =
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
+  base: "/neon-puzzle/",
   plugins: [react(), wasm(), topLevelAwait(), tailwindcss()],
   test: {
     projects: [
