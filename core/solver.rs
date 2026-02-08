@@ -1,4 +1,4 @@
-use crate::model::{Board, Direction, NodeType};
+use crate::model::Board;
 use std::collections::{HashSet, VecDeque};
 
 pub fn get_energized_nodes(board: &Board) -> HashSet<(usize, usize)> {
@@ -30,11 +30,9 @@ pub fn get_energized_nodes(board: &Board) -> HashSet<(usize, usize)> {
                 // Check if neighbor connects back
                 if let Some(neighbor) = board.get_node(nx, ny) {
                     let neighbor_ports = neighbor.ports();
-                    if neighbor_ports.contains(&dir.opposite()) {
-                        if !visited.contains(&(nx, ny)) {
-                            visited.insert((nx, ny));
-                            queue.push_back((nx, ny));
-                        }
+                    if neighbor_ports.contains(&dir.opposite()) && !visited.contains(&(nx, ny)) {
+                        visited.insert((nx, ny));
+                        queue.push_back((nx, ny));
                     }
                 }
             }

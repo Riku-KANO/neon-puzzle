@@ -11,8 +11,8 @@ const CameraRig: React.FC<CameraRigProps> = ({ mode }) => {
 
     useFrame((state, delta) => {
         // Target position based on mode
-        let targetPos = new THREE.Vector3(0, 8, 8); // Default PLAY position
-        let targetLookAt = new THREE.Vector3(0, 0, 0);
+        const targetPos = new THREE.Vector3(0, 8, 8); // Default PLAY position
+        const targetLookAt = new THREE.Vector3(0, 0, 0);
 
         if (mode === 'MENU') {
             targetPos.set(0, 0, 10); // Front view for menu

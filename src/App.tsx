@@ -16,6 +16,7 @@ function App() {
   const [connectedIndices, setConnectedIndices] = useState<Set<number>>(new Set());
   const [gameState, setGameState] = useState<GameState>('MENU');
   const [isWasmReady, setIsWasmReady] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
 
   useEffect(() => {

@@ -109,7 +109,7 @@ const Block: React.FC<BlockProps> = ({ type, rotation, position, onClick, connec
     }, [type, color, emissive]);
 
     return (
-        <group position={position} rotation={[0, rotationY, 0]} onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}>
+        <group position={position} rotation={[0, rotationY, 0]} onClick={(e) => { e.stopPropagation(); onClick?.(); }}>
              {/* Base Tile */}
             <mesh position={[0, -0.1, 0]}>
                 <boxGeometry args={[0.9, 0.1, 0.9]} />

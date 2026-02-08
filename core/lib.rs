@@ -3,7 +3,7 @@ mod model;
 mod solver;
 
 use generator::{generate_solved_board, scramble_board};
-use model::{Board, NodeType};
+use model::Board;
 use solver::get_energized_nodes;
 use wasm_bindgen::prelude::*;
 

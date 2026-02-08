@@ -62,9 +62,8 @@ pub fn generate_solved_board(width: usize, height: usize) -> Board {
     }
 
     // 3. Convert connections to NodeTypes
-    for y in 0..height {
-        for x in 0..width {
-            let dirs = &mut connections[y][x];
+    for (y, row) in connections.iter_mut().enumerate() {
+        for (x, dirs) in row.iter_mut().enumerate() {
             dirs.sort_by_key(|d| *d as u8); // Sort for easier matching
 
             let node_type = match dirs.len() {
@@ -72,13 +71,11 @@ pub fn generate_solved_board(width: usize, height: usize) -> Board {
                 2 => {
                     let d1 = dirs[0];
                     let d2 = dirs[1];
-                    if d1 == Direction::North && d2 == Direction::South {
+                    if (d1 == Direction::North && d2 == Direction::South)
+                        || (d1 == Direction::East && d2 == Direction::West)
+                    {
                         NodeType::Straight
-                    } else if d1 == Direction::East && d2 == Direction::West {
-                        NodeType::Straight
-                    }
-                    // Need rotation validation
-                    else {
+                    } else {
                         NodeType::Elbow
                     }
                 }
