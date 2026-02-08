@@ -7,6 +7,8 @@ export type NodeType =
   | "Tee"
   | "Cross";
 
+export type Difficulty = "easy" | "normal" | "hard";
+
 export const Direction = {
   North: 0,
   East: 1,

@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import type { NodeType } from "../types";
 import { Edges } from "@react-three/drei";
+import ElectricMaterial from "./ElectricMaterial";
 
 interface BlockProps {
   type: NodeType;
@@ -26,8 +27,22 @@ const Block: React.FC<BlockProps> = ({
 
   const color = connected ? "#00ffff" : "#333333";
   const emissive = connected ? "#00aaaa" : "#000000";
+  const glowColor = "#7ffbff";
 
   const Geometry = useMemo(() => {
+    const electricOverlay = (
+      geometry: React.ReactNode,
+      position?: [number, number, number],
+      rotation?: [number, number, number],
+      scale = 1.04,
+    ) =>
+      connected ? (
+        <mesh position={position} rotation={rotation} scale={scale}>
+          {geometry}
+          <ElectricMaterial color={color} glow={glowColor} opacity={0.85} />
+        </mesh>
+      ) : null;
+
     switch (type) {
       case "Straight":
         return (
@@ -36,6 +51,11 @@ const Block: React.FC<BlockProps> = ({
               <cylinderGeometry args={[0.1, 0.1, 1, 8]} />
               <meshStandardMaterial color={color} emissive={emissive} />
             </mesh>
+            {electricOverlay(
+              <cylinderGeometry args={[0.1, 0.1, 1, 8]} />,
+              [0, 0, 0],
+              [Math.PI / 2, 0, 0],
+            )}
           </group>
         );
       case "Elbow":
@@ -46,14 +66,25 @@ const Block: React.FC<BlockProps> = ({
               <cylinderGeometry args={[0.1, 0.1, 0.5, 8]} />
               <meshStandardMaterial color={color} emissive={emissive} />
             </mesh>
+            {electricOverlay(
+              <cylinderGeometry args={[0.1, 0.1, 0.5, 8]} />,
+              [0, 0, -0.25],
+              [Math.PI / 2, 0, 0],
+            )}
             <mesh position={[0.25, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
               <cylinderGeometry args={[0.1, 0.1, 0.5, 8]} />
               <meshStandardMaterial color={color} emissive={emissive} />
             </mesh>
+            {electricOverlay(
+              <cylinderGeometry args={[0.1, 0.1, 0.5, 8]} />,
+              [0.25, 0, 0],
+              [0, 0, Math.PI / 2],
+            )}
             <mesh position={[0, 0, 0]}>
               <sphereGeometry args={[0.12]} />
               <meshStandardMaterial color={color} emissive={emissive} />
             </mesh>
+            {electricOverlay(<sphereGeometry args={[0.12]} />, [0, 0, 0])}
           </group>
         );
       case "Tee":
@@ -64,14 +95,25 @@ const Block: React.FC<BlockProps> = ({
               <cylinderGeometry args={[0.1, 0.1, 0.5, 8]} />
               <meshStandardMaterial color={color} emissive={emissive} />
             </mesh>
+            {electricOverlay(
+              <cylinderGeometry args={[0.1, 0.1, 0.5, 8]} />,
+              [0, 0, 0.25],
+              [Math.PI / 2, 0, 0],
+            )}
             <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
               <cylinderGeometry args={[0.1, 0.1, 1, 8]} />
               <meshStandardMaterial color={color} emissive={emissive} />
             </mesh>
+            {electricOverlay(
+              <cylinderGeometry args={[0.1, 0.1, 1, 8]} />,
+              [0, 0, 0],
+              [0, 0, Math.PI / 2],
+            )}
             <mesh position={[0, 0, 0]}>
               <sphereGeometry args={[0.12]} />
               <meshStandardMaterial color={color} emissive={emissive} />
             </mesh>
+            {electricOverlay(<sphereGeometry args={[0.12]} />, [0, 0, 0])}
           </group>
         );
       case "Cross":
@@ -81,10 +123,20 @@ const Block: React.FC<BlockProps> = ({
               <cylinderGeometry args={[0.1, 0.1, 1, 8]} />
               <meshStandardMaterial color={color} emissive={emissive} />
             </mesh>
+            {electricOverlay(
+              <cylinderGeometry args={[0.1, 0.1, 1, 8]} />,
+              [0, 0, 0],
+              [Math.PI / 2, 0, 0],
+            )}
             <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
               <cylinderGeometry args={[0.1, 0.1, 1, 8]} />
               <meshStandardMaterial color={color} emissive={emissive} />
             </mesh>
+            {electricOverlay(
+              <cylinderGeometry args={[0.1, 0.1, 1, 8]} />,
+              [0, 0, 0],
+              [0, 0, Math.PI / 2],
+            )}
           </group>
         );
       case "Source":
@@ -94,10 +146,26 @@ const Block: React.FC<BlockProps> = ({
               <boxGeometry args={[0.8, 0.2, 0.8]} />
               <meshStandardMaterial color="#ff00ff" emissive="#aa00aa" />
             </mesh>
+            {connected && (
+              <mesh scale={1.03}>
+                <boxGeometry args={[0.8, 0.2, 0.8]} />
+                <ElectricMaterial
+                  color="#ff66ff"
+                  glow="#ffb3ff"
+                  opacity={0.8}
+                />
+              </mesh>
+            )}
             <mesh position={[0, 0, 0.4]} rotation={[Math.PI / 2, 0, 0]}>
               <cylinderGeometry args={[0.1, 0.1, 0.2, 8]} />
               <meshStandardMaterial color={color} emissive={emissive} />
             </mesh>
+            {electricOverlay(
+              <cylinderGeometry args={[0.1, 0.1, 0.2, 8]} />,
+              [0, 0, 0.4],
+              [Math.PI / 2, 0, 0],
+              1.06,
+            )}
           </group>
         );
       case "Target":
@@ -107,13 +175,23 @@ const Block: React.FC<BlockProps> = ({
               <boxGeometry args={[0.6, 0.6, 0.6]} />
               <meshStandardMaterial color="#00ff00" emissive="#00aa00" />
             </mesh>
+            {connected && (
+              <mesh scale={1.05}>
+                <boxGeometry args={[0.6, 0.6, 0.6]} />
+                <ElectricMaterial
+                  color="#00ff88"
+                  glow="#66ffcc"
+                  opacity={0.9}
+                />
+              </mesh>
+            )}
           </group>
         );
       case "Empty":
       default:
         return null;
     }
-  }, [type, color, emissive]);
+  }, [type, color, emissive, connected]);
 
   return (
     <group
