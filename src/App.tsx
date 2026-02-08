@@ -11,7 +11,7 @@ import init, {
   generate_level,
   check_connection_status,
 } from "../pkg/neon_puzzle";
-import type { BoardData } from "./types";
+import type { BoardData, Difficulty } from "./types";
 import Board from "./components/Board";
 import MainMenu from "./components/MainMenu";
 import Celebration from "./components/Celebration";
@@ -25,9 +25,17 @@ function App() {
     new Set(),
   );
   const [gameState, setGameState] = useState<GameState>("MENU");
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [isWasmReady, setIsWasmReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const controlsRef = useRef<OrbitControlsImpl>(null);
+
+  const difficultyConfig: Record<Difficulty, { label: string; size: number }> =
+    {
+      easy: { label: "EASY", size: 4 },
+      normal: { label: "NORMAL", size: 5 },
+      hard: { label: "HARD", size: 7 },
+    };
 
   useEffect(() => {
     init()
@@ -41,11 +49,11 @@ function App() {
       });
   }, []);
 
-  const startGame = (difficulty: "easy" | "normal" | "hard") => {
+  const startGame = (nextDifficulty: Difficulty) => {
     if (!isWasmReady) return;
 
-    // Difficulty logic: adjust size later? For now MVP fixed 5x5
-    const size = difficulty === "hard" ? 7 : 5;
+    setDifficulty(nextDifficulty);
+    const size = difficultyConfig[nextDifficulty].size;
     const data = generate_level(size, size) as BoardData;
 
     setBoardData(data);
@@ -122,6 +130,9 @@ function App() {
             <p className="text-cyan-300">
               STATUS: <span className="text-white">CONNECTED</span>
             </p>
+            <p className="text-xs text-cyan-200/80">
+              DIFFICULTY: {difficultyConfig[difficulty].label}
+            </p>
             <p className="text-xs text-gray-400">
               Rotate blocks to route power.
             </p>
@@ -132,8 +143,34 @@ function App() {
             <h2 className="text-4xl font-bold text-green-400 text-center mb-2">
               SYSTEM RESTORED
             </h2>
+            <p className="text-center text-green-200 text-sm">
+              Difficulty: {difficultyConfig[difficulty].label}
+            </p>
+            <div className="mt-4 flex flex-col gap-2">
+              <button
+                className="pointer-events-auto px-6 py-2 bg-cyan-600 hover:bg-cyan-500 rounded text-white font-bold transition-colors"
+                onClick={() => startGame(difficulty)}
+              >
+                NEW PUZZLE
+              </button>
+              <div className="grid grid-cols-3 gap-2">
+                {(["easy", "normal", "hard"] as const).map((level) => (
+                  <button
+                    key={level}
+                    className={`pointer-events-auto px-2 py-2 rounded font-bold text-xs transition-colors ${
+                      difficulty === level
+                        ? "bg-emerald-500 text-black"
+                        : "bg-gray-800 hover:bg-gray-700 text-white"
+                    }`}
+                    onClick={() => startGame(level)}
+                  >
+                    {difficultyConfig[level].label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button
-              className="pointer-events-auto mt-4 px-6 py-2 bg-green-600 hover:bg-green-500 rounded text-white font-bold w-full transition-colors"
+              className="pointer-events-auto mt-3 px-6 py-2 bg-green-600 hover:bg-green-500 rounded text-white font-bold w-full transition-colors"
               onClick={() => setGameState("MENU")}
             >
               RETURN TO MENU
@@ -194,7 +231,13 @@ function App() {
 
         {/* Content */}
         <group>
-          {gameState === "MENU" && <MainMenu onStart={startGame} />}
+          {gameState === "MENU" && (
+            <MainMenu
+              difficulty={difficulty}
+              onSelectDifficulty={setDifficulty}
+              onStart={startGame}
+            />
+          )}
 
           {(gameState === "PLAY" || gameState === "WON") && boardData && (
             <group>
