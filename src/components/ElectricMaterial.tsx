@@ -1,7 +1,7 @@
 import React, { useMemo, useRef } from "react";
 import { AdditiveBlending, Color } from "three";
 import { shaderMaterial } from "@react-three/drei";
-import { extend, useFrame, type ReactThreeFiber } from "@react-three/fiber";
+import { extend, useFrame, type ThreeElement } from "@react-three/fiber";
 
 const ElectricShaderMaterial = shaderMaterial(
   {
@@ -51,10 +51,7 @@ type ElectricShaderMaterialImpl = InstanceType<typeof ElectricShaderMaterial>;
 
 declare module "@react-three/fiber" {
   interface ThreeElements {
-    electricShaderMaterial: ReactThreeFiber.Object3DNode<
-      ElectricShaderMaterialImpl,
-      typeof ElectricShaderMaterial
-    >;
+    electricShaderMaterial: ThreeElement<typeof ElectricShaderMaterial>;
   }
 }
 
