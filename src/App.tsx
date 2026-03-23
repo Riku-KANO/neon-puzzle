@@ -61,6 +61,7 @@ function App() {
       const size = difficultyConfig[nextDifficulty].size;
       const data = generate_level(size, size) as BoardData;
 
+
       setBoardData(data);
       const energized = check_connection_status(data) as number[];
       setConnectedIndices(new Set(energized));
