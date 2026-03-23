@@ -17,7 +17,7 @@ import MainMenu from "./components/MainMenu";
 import Celebration from "./components/Celebration";
 import CameraRig from "./components/CameraRig";
 
-type GameState = "MENU" | "PLAY" | "WON";
+type GameState = "MENU" | "LOADING" | "PLAY" | "WON";
 
 function App() {
   const [boardData, setBoardData] = useState<BoardData | null>(null);
@@ -34,7 +34,7 @@ function App() {
     {
       easy: { label: "EASY", size: 4 },
       normal: { label: "NORMAL", size: 5 },
-      hard: { label: "HARD", size: 7 },
+      hard: { label: "HARD", size: 9 },
     };
 
   useEffect(() => {
@@ -53,19 +53,30 @@ function App() {
     if (!isWasmReady) return;
 
     setDifficulty(nextDifficulty);
-    const size = difficultyConfig[nextDifficulty].size;
-    const data = generate_level(size, size) as BoardData;
+    setBoardData(null);
+    setGameState("LOADING");
 
-    setBoardData(data);
-    const energized = check_connection_status(data) as number[];
-    setConnectedIndices(new Set(energized));
-    setGameState("PLAY");
+    // Generate level after a brief delay to allow the loading transition
+    setTimeout(() => {
+      const size = difficultyConfig[nextDifficulty].size;
+      const data = generate_level(size, size) as BoardData;
 
-    // Reset camera controls target
-    if (controlsRef.current) {
-      controlsRef.current.target.set(0, 0, 0);
-      controlsRef.current.object.position.set(0, 8, 8);
-    }
+
+      setBoardData(data);
+      const energized = check_connection_status(data) as number[];
+      setConnectedIndices(new Set(energized));
+
+      // Let the camera settle into position before revealing the board
+      setTimeout(() => {
+        setGameState("PLAY");
+
+        // Reset camera controls target
+        if (controlsRef.current) {
+          controlsRef.current.target.set(0, 0, 0);
+          controlsRef.current.object.position.set(0, 8, 8);
+        }
+      }, 800);
+    }, 700);
   };
 
   const handleRotate = useCallback(
@@ -77,6 +88,8 @@ function App() {
         const newNodes = [...prev.nodes];
         const index = y * prev.width + x;
         const node = { ...newNodes[index] };
+
+        if (node.fixed) return prev;
 
         // Rotate 90 degrees clockwise
         node.rotation = (node.rotation + 1) % 4;
@@ -118,6 +131,23 @@ function App() {
 
   return (
     <div className="w-full h-screen bg-gray-950 text-white relative select-none">
+      {/* Loading Overlay */}
+      {gameState === "LOADING" && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+          <div className="text-center animate-pulse">
+            <div className="text-3xl font-bold text-cyan-400 drop-shadow-[0_0_20px_rgba(0,255,255,0.8)] mb-3">
+              INITIALIZING
+            </div>
+            <div className="text-sm text-cyan-200/60 tracking-[0.3em]">
+              {difficultyConfig[difficulty].label} MODE
+            </div>
+            <div className="mt-6 mx-auto w-48 h-0.5 bg-gray-800 rounded overflow-hidden">
+              <div className="h-full bg-cyan-400 rounded shadow-[0_0_8px_rgba(0,255,255,0.6)] animate-[loading_1.5s_ease-in-out_infinite]" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* HUD UI */}
       <div className="absolute top-4 left-4 z-10 pointer-events-none">
         {gameState === "MENU" && (
@@ -136,6 +166,12 @@ function App() {
             <p className="text-xs text-gray-400">
               Rotate blocks to route power.
             </p>
+            <button
+              className="pointer-events-auto mt-3 px-3 py-1.5 bg-gray-800/80 hover:bg-gray-700 rounded text-xs text-cyan-300 border border-cyan-500/30 transition-colors w-full"
+              onClick={() => setGameState("MENU")}
+            >
+              MENU
+            </button>
           </div>
         )}
         {gameState === "WON" && (
@@ -185,17 +221,17 @@ function App() {
         {/* Controls: Active only in PLAY/WON, but we manually control transition? 
             For Menu, we might want auto-rotation.
         */}
-        {gameState !== "MENU" && (
+        {gameState === "PLAY" || gameState === "WON" ? (
           <OrbitControls
             ref={controlsRef}
             target={[0, 0, 0]}
             maxPolarAngle={Math.PI / 2.5}
             enablePan={false}
           />
-        )}
+        ) : null}
 
-        {/* Cinematic Camera for Menu */}
-        {gameState === "MENU" && (
+        {/* Cinematic Camera for Menu / Loading */}
+        {(gameState === "MENU" || gameState === "LOADING") && (
           <OrbitControls
             autoRotate={true}
             autoRotateSpeed={0.5}

@@ -1,0 +1,33 @@
+[tools]
+node = "20"
+rust = "stable"
+"cargo:wasm-pack" = "latest"
+
+[tasks.wasm]
+description = "Build WASM module"
+run = "wasm-pack build --target web"
+
+[tasks.dev]
+description = "Start dev server (builds WASM first)"
+depends = ["wasm"]
+run = "npm run dev"
+
+[tasks.build]
+description = "Production build"
+depends = ["wasm"]
+run = "npm run build"
+
+[tasks.lint]
+description = "Run all linters"
+run = [
+  "cargo fmt -- --check",
+  "cargo clippy -- -D warnings",
+  "npm run lint",
+]
+
+[tasks.format]
+description = "Format all code"
+run = [
+  "cargo fmt",
+  "npm run format",
+]

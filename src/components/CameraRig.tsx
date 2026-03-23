@@ -3,41 +3,36 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 interface CameraRigProps {
-  mode: "MENU" | "PLAY" | "WON";
+  mode: "MENU" | "LOADING" | "PLAY" | "WON";
 }
 
 const CameraRig: React.FC<CameraRigProps> = ({ mode }) => {
   const { camera } = useThree();
 
   useFrame((state, delta) => {
-    // Target position based on mode
-    const targetPos = new THREE.Vector3(0, 8, 8); // Default PLAY position
+    const targetPos = new THREE.Vector3(0, 8, 8);
     const targetLookAt = new THREE.Vector3(0, 0, 0);
 
     if (mode === "MENU") {
-      targetPos.set(0, 0, 10); // Front view for menu
-      targetLookAt.set(0, 1, 0); // Look slightly up
+      targetPos.set(0, 0, 10);
+      targetLookAt.set(0, 1, 0);
+    } else if (mode === "LOADING") {
+      // Dramatic zoom-out and top-down sweep during loading
+      const t = state.clock.elapsedTime;
+      targetPos.set(Math.sin(t * 1.5) * 3, 20, Math.cos(t * 1.5) * 3);
+      targetLookAt.set(0, 0, 0);
     } else if (mode === "PLAY") {
-      targetPos.set(0, 12, 8); // High angle isometric
+      targetPos.set(0, 12, 8);
       targetLookAt.set(0, 0, 0);
     } else if (mode === "WON") {
-      // Orbit logic could go here, but keep simple for now
       const time = state.clock.elapsedTime;
       targetPos.set(Math.sin(time * 0.5) * 12, 8, Math.cos(time * 0.5) * 12);
       targetLookAt.set(0, 0, 0);
     }
 
-    // Smooth transition
-    camera.position.lerp(targetPos, delta * 2);
-
-    // Custom lookAt lerp is tricky, so we lerp the target and use lookAt
-    // Or just snap lookAt for now, maybe lerp orbit controls target if strictly using controls
-    // But here we are manipulating camera directly.
-    // We need to disable OrbitControls during transition or update its target.
-    // Assuming OrbitControls in App handles user input, we might fight it.
-    // For MVP, if in Menu, we override control. If in Play, we let OrbitControls take over?
-    // Actually best to control everything here if we want cinematic entry.
-
+    // Faster lerp during loading for snappier camera movement
+    const speed = mode === "LOADING" ? delta * 3 : delta * 2;
+    camera.position.lerp(targetPos, speed);
     state.camera.lookAt(targetLookAt);
   });
 
