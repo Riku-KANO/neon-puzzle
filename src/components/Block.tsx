@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
 import type { NodeType } from "../types";
@@ -32,12 +32,14 @@ const Block: React.FC<BlockProps> = ({
   const cumulativeTarget = useRef((-Math.PI / 2) * rotation);
   const currentRotRef = useRef((-Math.PI / 2) * rotation);
 
-  if (rotation !== prevRotation.current) {
-    // Determine the forward step (0→1→2→3→0 = always +1 mod 4)
-    const step = (rotation - prevRotation.current + 4) % 4;
-    cumulativeTarget.current -= (Math.PI / 2) * step;
-    prevRotation.current = rotation;
-  }
+  useEffect(() => {
+    if (rotation !== prevRotation.current) {
+      // Determine the forward step (0→1→2→3→0 = always +1 mod 4)
+      const step = (rotation - prevRotation.current + 4) % 4;
+      cumulativeTarget.current -= (Math.PI / 2) * step;
+      prevRotation.current = rotation;
+    }
+  }, [rotation]);
 
   useFrame((_state, delta) => {
     if (!groupRef.current) return;
