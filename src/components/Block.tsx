@@ -1,4 +1,6 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import type { Group } from "three";
 import type { NodeType } from "../types";
 import { Edges } from "@react-three/drei";
 import ElectricMaterial from "./ElectricMaterial";
@@ -6,24 +8,54 @@ import ElectricMaterial from "./ElectricMaterial";
 interface BlockProps {
   type: NodeType;
   rotation: number; // 0..3
+  fixed?: boolean;
   position: [number, number, number];
   onClick?: () => void;
-  connected?: boolean; // For visualization
+  connected?: boolean;
   marker?: "Source" | "Target";
 }
 
 const Block: React.FC<BlockProps> = ({
   type,
   rotation,
+  fixed = false,
   position,
   onClick,
   connected = false,
   marker,
 }) => {
-  // Rotation logic: Three.js uses radians.
-  // Assuming board is XZ plane, rotation '0' (North) might mean -Z.
-  // Let's align later. standard generic rotation: -Math.PI / 2 * rotation
-  const rotationY = (-Math.PI / 2) * rotation;
+  const groupRef = useRef<Group>(null);
+
+  // Use a cumulative target that always decreases by π/2 on each click,
+  // so the animation always goes clockwise (no 270° reverse on 3→0 wrap).
+  const prevRotation = useRef(rotation);
+  const cumulativeTarget = useRef((-Math.PI / 2) * rotation);
+  const currentRotRef = useRef((-Math.PI / 2) * rotation);
+
+  if (rotation !== prevRotation.current) {
+    // Determine the forward step (0→1→2→3→0 = always +1 mod 4)
+    const step = (rotation - prevRotation.current + 4) % 4;
+    cumulativeTarget.current -= (Math.PI / 2) * step;
+    prevRotation.current = rotation;
+  }
+
+  useFrame((_state, delta) => {
+    if (!groupRef.current) return;
+
+    const current = currentRotRef.current;
+    const target = cumulativeTarget.current;
+    const diff = target - current;
+
+    if (Math.abs(diff) > 0.01) {
+      const speed = 10;
+      const next = current + diff * Math.min(delta * speed, 1);
+      currentRotRef.current = next;
+      groupRef.current.rotation.y = next;
+    } else {
+      currentRotRef.current = target;
+      groupRef.current.rotation.y = target;
+    }
+  });
 
   const color = connected ? "#00ffff" : "#333333";
   const emissive = connected ? "#00aaaa" : "#000000";
@@ -61,7 +93,6 @@ const Block: React.FC<BlockProps> = ({
       case "Elbow":
         return (
           <group>
-            {/* L shape: Center to North, Center to East */}
             <mesh position={[0, 0, -0.25]} rotation={[Math.PI / 2, 0, 0]}>
               <cylinderGeometry args={[0.1, 0.1, 0.5, 8]} />
               <meshStandardMaterial color={color} emissive={emissive} />
@@ -90,7 +121,6 @@ const Block: React.FC<BlockProps> = ({
       case "Tee":
         return (
           <group>
-            {/* T shape: South, East, West */}
             <mesh position={[0, 0, 0.25]} rotation={[Math.PI / 2, 0, 0]}>
               <cylinderGeometry args={[0.1, 0.1, 0.5, 8]} />
               <meshStandardMaterial color={color} emissive={emissive} />
@@ -195,18 +225,30 @@ const Block: React.FC<BlockProps> = ({
 
   return (
     <group
+      ref={groupRef}
       position={position}
-      rotation={[0, rotationY, 0]}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick?.();
-      }}
     >
       {/* Base Tile */}
       <mesh position={[0, -0.1, 0]}>
         <boxGeometry args={[0.9, 0.1, 0.9]} />
-        <meshStandardMaterial color="#222" transparent={true} opacity={0.8} />
-        <Edges color="#444" />
+        <meshStandardMaterial
+          color={fixed ? "#1a1a2e" : "#222"}
+          transparent={true}
+          opacity={0.8}
+        />
+        <Edges color={fixed ? "#555" : "#444"} />
+      </mesh>
+      {/* Clickable area — only for non-fixed blocks */}
+      <mesh
+        position={[0, 0, 0]}
+        visible={false}
+        onClick={(e) => {
+          if (fixed) return;
+          e.stopPropagation();
+          onClick?.();
+        }}
+      >
+        <boxGeometry args={[0.9, 0.5, 0.9]} />
       </mesh>
       {Geometry}
       {marker === "Source" && (

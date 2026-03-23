@@ -94,14 +94,10 @@ pub fn generate_solved_board(width: usize, height: usize) -> Board {
                 node.node_type = final_type;
                 node.rotation = best_rotation;
 
-                // Allow (0,0) and (w-1, h-1) to be terminals if they have degree 1,
-                // but if they are part of a path, they must be Straight/Elbow/etc.
-                // We rely on Board::start_pos/end_pos to identify them.
-
-                // Fix: Ensure fixed rotation for start/end if we wanted them fixed?
-                // For MVP, allow rotation even for start/end to keep it simple,
-                // or fix them if they are truly terminals.
-                // But since we don't guarantee they are terminals, let them rotate.
+                // Source and Target nodes are fixed — players cannot rotate them
+                if final_type == NodeType::Source || final_type == NodeType::Target {
+                    node.fixed = true;
+                }
             }
         }
     }

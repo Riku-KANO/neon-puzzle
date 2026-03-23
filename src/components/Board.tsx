@@ -27,8 +27,9 @@ const Board: React.FC<BoardProps> = ({ data, onRotate, connectedIndices }) => {
             key={`${x}-${y}`}
             type={node.node_type}
             rotation={node.rotation}
+            fixed={node.fixed}
             position={[x, 0, y]}
-            onClick={() => onRotate(x, y)}
+            onClick={node.fixed ? undefined : () => onRotate(x, y)}
             connected={connectedIndices.has(i)}
             marker={isStart ? "Source" : isEnd ? "Target" : undefined}
           />
